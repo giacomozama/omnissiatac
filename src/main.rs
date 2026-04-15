@@ -55,24 +55,28 @@ const HELP_TEXT: &str = "
 - `help` (h): Show this help message.
 
 **Conversational Mode:**
-- Mention me (@OmnissiATAC) to chat! I'm powered by a local Machine Spirit (LLM).";
+- Mention me (@[BOT_NAME]) to chat! I'm powered by a local Machine Spirit (LLM).";
 
 struct Handler;
 
 async fn help(ctx: &Context, msg: &Message) {
+    let bot_name = ctx.cache.current_user().name.clone();
     let ctx = CommandContext::new(ctx, CommandSource::Message(msg));
+    let help_text = HELP_TEXT.replace("[BOT_NAME]", &bot_name);
     let text = format!(
         "{}
 
 *Note: You can also use Slash Commands (/) for all of these!*",
-        HELP_TEXT
+        help_text
     );
     let _ = ctx.reply(text).await;
 }
 
 async fn slash_help(ctx: &Context, command: &CommandInteraction) {
+    let bot_name = ctx.cache.current_user().name.clone();
     let ctx = CommandContext::new(ctx, CommandSource::Interaction(command));
-    let _ = ctx.reply(HELP_TEXT).await;
+    let help_text = HELP_TEXT.replace("[BOT_NAME]", &bot_name);
+    let _ = ctx.reply(help_text).await;
 }
 
 async fn slash_llm(ctx: &Context, command: &CommandInteraction) {
@@ -283,7 +287,11 @@ impl EventHandler for Handler {
             let config_lock = data.get::<ConfigKey>().expect("ConfigKey not found").clone();
             let config = config_lock.read().await;
             
-            let ollama_config = config.ollama.clone();
+            let mut ollama_config = config.ollama.clone();
+            let bot_name = ctx.cache.current_user().name.clone();
+            if let Some(ref mut system_prompt) = ollama_config.system_prompt {
+                *system_prompt = system_prompt.replace("[BOT_NAME]", &bot_name);
+            }
             let history_map = data.get::<ChatHistory>().expect("ChatHistory not found").clone();
             
             // Remove the bot mention from the content to get the actual prompt

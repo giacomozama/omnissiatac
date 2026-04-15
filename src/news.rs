@@ -48,7 +48,11 @@ async fn handle_news(ctx: CommandContext<'_>) {
         .expect("ConfigKey not found")
         .clone();
     let config = config_lock.read().await;
-    let ollama_config = config.ollama.clone();
+    let mut ollama_config = config.ollama.clone();
+    let bot_name = ctx.ctx.cache.current_user().name.clone();
+    if let Some(ref mut system_prompt) = ollama_config.system_prompt {
+        *system_prompt = system_prompt.replace("[BOT_NAME]", &bot_name);
+    }
     let news_config = config.news.clone();
     drop(data);
 
