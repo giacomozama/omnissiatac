@@ -43,7 +43,7 @@ const HELP_TEXT: &str = "
 - `play <query>` (p): Play a song from YouTube or a URL.
 - `say <text>` (s): Convert text to speech (guesses language).
 - `sayin <lang> <text>` (si): Convert text to speech in a specific language.
-- `slop <prompt>` (i): Generate AI art from the Machine Spirit's forge.
+- `slop <prompt>` (i): Generate AI slop.
 - `skip` (sk): Skip the current song.
 - `stop` (st): Stop the music and clear the queue.
 - `leave` (l, kys): Leave the voice channel immediately.
@@ -52,10 +52,11 @@ const HELP_TEXT: &str = "
 - `playlist play <name>` (pl p): Play a bot playlist.
 - `playlist list` (pl ls): List all bot playlists.
 - `llm reset` (llm r): Reset conversation history for this channel.
+- `reboot`: Restart the bot (Owner only).
 - `help` (h): Show this help message.
 
 **Conversational Mode:**
-- Mention me (@[BOT_NAME]) to chat! I'm powered by a local Machine Spirit (LLM).";
+- Mention me (@[BOT_NAME]) to chat! I'm powered by a local LLM.";
 
 struct Handler;
 
@@ -89,7 +90,7 @@ async fn slash_llm(ctx: &Context, command: &CommandInteraction) {
         let data = ctx.data.read().await;
         let history = data.get::<ChatHistory>().expect("ChatHistory not found");
         history.remove(&command.channel_id);
-        let _ = ctx_cmd.reply("Conversation history has been purged. The Machine Spirit is refreshed.").await;
+        let _ = ctx_cmd.reply("Conversation history has been cleared.").await;
     } else {
         let _ = ctx_cmd.reply("Unknown LLM command. Use `/llm reset`.").await;
     }
@@ -189,6 +190,52 @@ async fn handle_playlist_prefix(ctx: &Context, msg: &Message, content: &str) {
     }
 }
 
+async fn slash_reboot(ctx: &Context, command: &CommandInteraction) {
+    let data = ctx.data.read().await;
+    let config_lock = data.get::<ConfigKey>().expect("ConfigKey not found").clone();
+    let config = config_lock.read().await;
+    let owner_only = config.bot.reboot_owner_only.unwrap_or(false);
+    drop(data);
+
+    if owner_only {
+        let info = match ctx.http.get_current_application_info().await {
+            Ok(info) => info,
+            Err(e) => {
+                error!("Failed to get application info: {:?}", e);
+                return;
+            }
+        };
+
+        if let Some(owner) = info.owner {
+            if owner.id != command.user.id {
+                let _ = command.create_response(&ctx.http, serenity::builder::CreateInteractionResponse::Message(
+                    serenity::builder::CreateInteractionResponseMessage::new().content("Only the bot owner can use this command.").ephemeral(true)
+                )).await;
+                return;
+            }
+        } else {
+             let _ = command.create_response(&ctx.http, serenity::builder::CreateInteractionResponse::Message(
+                    serenity::builder::CreateInteractionResponseMessage::new().content("Could not determine bot owner.").ephemeral(true)
+                )).await;
+                return;
+        }
+    }
+
+    let _ = command.create_response(&ctx.http, serenity::builder::CreateInteractionResponse::Message(
+        serenity::builder::CreateInteractionResponseMessage::new().content("Rebooting...")
+    )).await;
+
+    info!("Reboot triggered by user {} via slash command", command.user.name);
+    reboot();
+}
+
+const REBOOT_EXIT_CODE: i32 = 42;
+
+fn reboot() {
+    info!("Exiting with reboot code {}...", REBOOT_EXIT_CODE);
+    std::process::exit(REBOOT_EXIT_CODE);
+}
+
 #[async_trait]
 impl EventHandler for Handler {
     async fn ready(&self, ctx: Context, ready: Ready) {
@@ -212,6 +259,7 @@ impl EventHandler for Handler {
                         "Reset conversation history for this channel",
                     )
                 ),
+            CreateCommand::new("reboot").description("Restart the bot (Owner only)"),
             CreateCommand::new("help").description("Show help message"),
         ];
 
@@ -238,6 +286,7 @@ impl EventHandler for Handler {
                 "leave" => music::slash_leave(&ctx, &command).await,
                 "playlist" => playlist::slash_playlist(&ctx, &command).await,
                 "llm" => slash_llm(&ctx, &command).await,
+                "reboot" => slash_reboot(&ctx, &command).await,
                 "help" => slash_help(&ctx, &command).await,
                 _ => (),
             };
@@ -270,10 +319,42 @@ impl EventHandler for Handler {
                         let data = ctx.data.read().await;
                         let history = data.get::<ChatHistory>().expect("ChatHistory not found");
                         history.remove(&msg.channel_id);
-                        let _ = msg.reply(&ctx.http, "Conversation history has been purged. The Machine Spirit is refreshed.").await;
+                        let _ = msg.reply(&ctx.http, "Conversation history has been cleared.").await;
                     } else {
                         let _ = msg.reply(&ctx.http, "Unknown LLM command. Use `!llm reset`.").await;
                     }
+                }
+                "reboot" => {
+                    let data = ctx.data.read().await;
+                    let config_lock = data.get::<ConfigKey>().expect("ConfigKey not found").clone();
+                    let config = config_lock.read().await;
+                    let owner_only = config.bot.reboot_owner_only.unwrap_or(false);
+                    drop(data);
+
+                    if owner_only {
+                        let info = match ctx.http.get_current_application_info().await {
+                            Ok(info) => info,
+                            Err(e) => {
+                                error!("Failed to get application info: {:?}", e);
+                                return;
+                            }
+                        };
+
+                        let is_owner = if let Some(owner) = info.owner {
+                            owner.id == msg.author.id
+                        } else {
+                            false
+                        };
+
+                        if !is_owner {
+                            let _ = msg.reply(&ctx.http, "Only the bot owner can use this command.").await;
+                            return;
+                        }
+                    }
+
+                    let _ = msg.reply(&ctx.http, "Rebooting...").await;
+                    info!("Reboot triggered by user {} via prefix command", msg.author.name);
+                    reboot();
                 }
                 "help" | "h" => help(&ctx, &msg).await,
                 _ => (),
@@ -304,7 +385,7 @@ impl EventHandler for Handler {
             let prompt = msg.content.replace(&mention, "").replace(&mention_nick, "").trim().to_string();
             
             if prompt.is_empty() {
-                let _ = msg.reply(&ctx.http, "Praise the Omnissiah! How may I assist you?").await;
+                let _ = msg.reply(&ctx.http, "How can I help you today?").await;
                 return;
             }
 
@@ -326,7 +407,7 @@ impl EventHandler for Handler {
                     }
                     Err(e) => {
                         error!("Error querying LLM: {:?}", e);
-                        let _ = msg_clone.reply(&ctx_clone.http, "The Machine Spirit is silent... (Failed to connect to LLM node)").await;
+                        let _ = msg_clone.reply(&ctx_clone.http, "I'm having trouble connecting to the LLM. Please try again later.").await;
                     }
                 }
             });

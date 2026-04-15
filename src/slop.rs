@@ -67,19 +67,19 @@ async fn handle_slop(ctx: CommandContext<'_>, prompt: &str) {
     drop(data);
 
     let _ = ctx
-        .reply("The Machine Spirit is beginning the Great Work... (Generating art)")
+        .reply("Generating slop... please wait.")
         .await;
 
     match generate_image(&comfy_config, prompt).await {
         Ok(image_data) => {
             let attachment = CreateAttachment::bytes(image_data, "slop.png");
             let _ = ctx
-                .reply_with_attachment("Behold, a fragment of the Omnissiah's vision.", attachment)
+                .reply_with_attachment("Here is your generated image:", attachment)
                 .await;
         }
         Err(e) => {
             error!("Error generating image: {:?}", e);
-            let _ = ctx.reply(format!("The Forge has failed: {}", e)).await;
+            let _ = ctx.reply(format!("Failed to generate image: {}", e)).await;
         }
     }
 }
@@ -170,26 +170,33 @@ async fn generate_image(config: &ComfyUIConfig, prompt: &str) -> Result<Vec<u8>>
     let prompt_id = response.prompt_id;
 
     // Poll for completion
-    let image_filename;
-    loop {
-        tokio::time::sleep(Duration::from_secs(2)).await;
-        let history = client
-            .get(format!("{}/history/{}", config.base_url, prompt_id))
-            .send()
-            .await?
-            .json::<Value>()
-            .await?;
+    let timeout_duration = Duration::from_secs(config.timeout_seconds.unwrap_or(240));
+    let image_filename = tokio::time::timeout(timeout_duration, async {
+        loop {
+            tokio::time::sleep(Duration::from_secs(2)).await;
+            let history_res = client
+                .get(format!("{}/history/{}", config.base_url, prompt_id))
+                .send()
+                .await;
 
-        if let Some(item) = history.get(&prompt_id) {
-            if let Some(images) = item.pointer(&format!("/outputs/{}/images", config.save_node_id))
-            {
-                if let Some(first_image) = images.get(0) {
-                    image_filename = first_image["filename"].as_str().unwrap_or("").to_string();
-                    break;
+            let history = match history_res {
+                Ok(res) => res.json::<Value>().await.unwrap_or(Value::Null),
+                Err(_) => continue,
+            };
+
+            if let Some(item) = history.get(&prompt_id) {
+                if let Some(images) =
+                    item.pointer(&format!("/outputs/{}/images", config.save_node_id))
+                {
+                    if let Some(first_image) = images.get(0) {
+                        return first_image["filename"].as_str().unwrap_or("").to_string();
+                    }
                 }
             }
         }
-    }
+    })
+    .await
+    .map_err(|_| anyhow::anyhow!("Image generation timed out after {} seconds", timeout_duration.as_secs()))?;
 
     if image_filename.is_empty() {
         return Err(anyhow::anyhow!("Failed to get image filename from ComfyUI"));

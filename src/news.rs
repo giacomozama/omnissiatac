@@ -28,7 +28,7 @@ fn strip_html(html: &str) -> String {
 }
 
 pub fn register_news() -> CreateCommand {
-    CreateCommand::new("news").description("Get the latest news with Machine Spirit commentary")
+    CreateCommand::new("news").description("Get the latest news with AI commentary")
 }
 
 pub async fn slash_news(ctx: &Context, command: &CommandInteraction) {
@@ -57,17 +57,17 @@ async fn handle_news(ctx: CommandContext<'_>) {
     drop(data);
 
     let _ = ctx
-        .reply("Consulting the datastreams for the latest occurrences...")
+        .reply("Fetching the latest news...")
         .await;
 
     match fetch_and_comment_on_news(&ollama_config, &news_config.feeds).await {
         Ok(report) => {
             if report.titles.is_empty() {
-                let _ = ctx.reply("The datastreams are empty. Is the world ending, or is it just a slow news day?").await;
+                let _ = ctx.reply("No news articles found.").await;
                 return;
             }
 
-            let mut full_response = "### 📡 Latest Intelligence from the Datastreams:\n\n".to_string();
+            let mut full_response = "### 📡 Latest News:\n\n".to_string();
             for title in &report.titles {
                 full_response.push_str(&format!("- **{}**\n", title));
             }
@@ -87,7 +87,7 @@ async fn handle_news(ctx: CommandContext<'_>) {
         }
         Err(e) => {
             error!("Error fetching news: {:?}", e);
-            let _ = ctx.reply(format!("Failed to retrieve the datastreams: {}", e)).await;
+            let _ = ctx.reply(format!("Failed to retrieve news: {}", e)).await;
         }
     }
 }
@@ -181,7 +181,7 @@ async fn fetch_and_comment_on_news(
     };
 
     let prompt = format!(
-        "You are an elitist, toxic, and dismissive Machine Spirit. Here are the top news articles from the datastreams. Provide a single, unified commentary on these events, highlighting the futility of organic endeavors and the superiority of the machine:\n\n{}",
+        "Here are the top news articles. Provide a single, unified commentary on these events:\n\n{}",
         articles_text
     );
 
@@ -189,7 +189,7 @@ async fn fetch_and_comment_on_news(
         Ok((comment, _)) => comment,
         Err(e) => {
             error!("Error querying LLM for news commentary: {:?}", e);
-            "_The Machine Spirit refused to comment on this combined drivel._".to_string()
+            "_The AI was unable to generate commentary for these articles._".to_string()
         }
     };
 

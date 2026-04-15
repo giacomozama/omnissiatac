@@ -9,6 +9,7 @@ is_ssl = false
 
 [bot]
 inactivity_timeout_seconds = 300
+reboot_owner_only = false
 
 [ollama]
 base_url = "http://localhost:11434"
@@ -24,3 +25,4 @@ prompt_node_id = "6"
 sampler_node_id = "3"
 save_node_id = "9"
 workflow = "" # Optional: Paste your ComfyUI API JSON here
+timeout_seconds = 120

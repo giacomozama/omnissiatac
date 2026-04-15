@@ -1,0 +1,21 @@
+#!/bin/bash
+
+# Configuration
+REBOOT_EXIT_CODE=42
+BINARY="./omnissiatac"
+
+echo "Starting OmnissiATAC wrapper script..."
+
+while true; do
+    echo "Launching bot..."
+    $BINARY "$@"
+    EXIT_STATUS=$?
+
+    if [ $EXIT_STATUS -eq $REBOOT_EXIT_CODE ]; then
+        echo "Bot requested reboot (exit code $REBOOT_EXIT_CODE). Restarting in 2 seconds..."
+        sleep 2
+    else
+        echo "Bot exited with code $EXIT_STATUS. Exiting wrapper."
+        exit $EXIT_STATUS
+    fi
+done

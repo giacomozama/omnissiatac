@@ -32,6 +32,7 @@ pub struct LavalinkConfig {
 #[derive(Debug, Deserialize, Serialize, Clone)]
 pub struct BotConfig {
     pub inactivity_timeout_seconds: u64,
+    pub reboot_owner_only: Option<bool>,
 }
 
 #[derive(Debug, Deserialize, Serialize, Clone)]
@@ -51,6 +52,7 @@ pub struct ComfyUIConfig {
     pub sampler_node_id: String,
     pub save_node_id: String,
     pub workflow: Option<String>,
+    pub timeout_seconds: Option<u64>,
 }
 
 impl Config {

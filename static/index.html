@@ -64,6 +64,10 @@
                     <label>Inactivity Timeout (s):</label>
                     <input type="number" id="bot-timeout" />
                 </div>
+                <div class="field">
+                    <label>Reboot Owner Only:</label>
+                    <input type="checkbox" id="bot-reboot-owner" />
+                </div>
             </div>
             <div class="section">
                 <h3>Ollama</h3>
@@ -109,6 +113,10 @@
                 <div class="field">
                     <label>Save Node ID:</label>
                     <input type="text" id="comfy-save-node" />
+                </div>
+                <div class="field">
+                    <label>Timeout (s):</label>
+                    <input type="number" id="comfy-timeout" />
                 </div>
                 <div class="field">
                     <label>Workflow JSON (Optional):</label>
@@ -192,6 +200,8 @@
                     config.lavalink.is_ssl;
                 document.getElementById("bot-timeout").value =
                     config.bot.inactivity_timeout_seconds;
+                document.getElementById("bot-reboot-owner").checked =
+                    config.bot.reboot_owner_only || false;
                 document.getElementById("ollama-url").value =
                     config.ollama.base_url;
                 document.getElementById("ollama-model").value =
@@ -213,6 +223,8 @@
                     config.comfy.sampler_node_id;
                 document.getElementById("comfy-save-node").value =
                     config.comfy.save_node_id;
+                document.getElementById("comfy-timeout").value =
+                    config.comfy.timeout_seconds || 240;
                 document.getElementById("comfy-workflow").value =
                     config.comfy.workflow || "";
             }
@@ -239,6 +251,7 @@
                         inactivity_timeout_seconds: parseInt(
                             document.getElementById("bot-timeout").value,
                         ),
+                        reboot_owner_only: document.getElementById("bot-reboot-owner").checked,
                     },
                     web: {},
                     ollama: {
@@ -261,6 +274,9 @@
                             document.getElementById("comfy-sampler-node").value,
                         save_node_id:
                             document.getElementById("comfy-save-node").value,
+                        timeout_seconds: parseInt(
+                            document.getElementById("comfy-timeout").value,
+                        ),
                         workflow:
                             document.getElementById("comfy-workflow").value ||
                             null,

@@ -39,6 +39,10 @@ WORKDIR /app
 # Copy the binary from the builder stage
 COPY --from=builder /app/target/release/omnissiatac /app/omnissiatac
 
+# Copy the wrapper script
+COPY run.sh /app/run.sh
+RUN chmod +x /app/run.sh
+
 # Copy static assets required by the web server
 COPY static /app/static
 
@@ -51,5 +55,5 @@ COPY config.toml.example /app/config.toml
 # Expose the web server port
 EXPOSE 3000
 
-# Run the bot
-CMD ["./omnissiatac"]
+# Run the bot wrapper
+CMD ["./run.sh"]

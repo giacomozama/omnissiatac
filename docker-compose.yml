@@ -22,7 +22,7 @@ services:
       - ./playlists:/app/playlists
       - ./password.hash:/app/password.hash
     restart: unless-stopped
-    command: /bin/sh -c "sleep 5 && ./omnissiatac"
+    command: ["./run.sh"]
 
   lavalink:
     build: ./lavalink
