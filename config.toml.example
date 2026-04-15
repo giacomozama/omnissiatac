@@ -19,7 +19,8 @@ system_prompt = "You are OmnissiATAC, a confrontational edgelord and 4chan-style
 [comfy]
 base_url = "http://localhost:8188"
 ckpt_name = "v1-5-pruned-emaonly.ckpt"
+checkpoint_node_id = "4"
 prompt_node_id = "6"
-negative_prompt_node_id = "7"
 sampler_node_id = "3"
 save_node_id = "9"
+workflow = "" # Optional: Paste your ComfyUI API JSON here

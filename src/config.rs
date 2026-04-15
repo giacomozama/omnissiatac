@@ -46,10 +46,11 @@ pub struct OllamaConfig {
 pub struct ComfyUIConfig {
     pub base_url: String,
     pub ckpt_name: String,
+    pub checkpoint_node_id: String,
     pub prompt_node_id: String,
-    pub negative_prompt_node_id: String,
     pub sampler_node_id: String,
     pub save_node_id: String,
+    pub workflow: Option<String>,
 }
 
 impl Config {

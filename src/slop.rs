@@ -87,9 +87,12 @@ async fn handle_slop(ctx: CommandContext<'_>, prompt: &str) {
 async fn generate_image(config: &ComfyUIConfig, prompt: &str) -> Result<Vec<u8>> {
     let client = reqwest::Client::new();
 
-    // Default workflow JSON
-    let mut workflow: Value = serde_json::from_str(
-        r#"{
+    // Default workflow JSON or custom one
+    let mut workflow: Value = if let Some(custom_workflow) = &config.workflow {
+        serde_json::from_str(custom_workflow)?
+    } else {
+        serde_json::from_str(
+            r#"{
         "3": {
             "inputs": {
                 "seed": 0,
@@ -130,10 +133,11 @@ async fn generate_image(config: &ComfyUIConfig, prompt: &str) -> Result<Vec<u8>>
             "class_type": "SaveImage"
         }
     }"#,
-    )?;
+        )?
+    };
 
     // Inject model
-    if let Some(node) = workflow.get_mut("4") {
+    if let Some(node) = workflow.get_mut(&config.checkpoint_node_id) {
         if let Some(inputs) = node.get_mut("inputs") {
             inputs["ckpt_name"] = Value::String(config.ckpt_name.clone());
         }

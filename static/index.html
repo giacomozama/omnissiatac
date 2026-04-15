@@ -95,12 +95,12 @@
                     <input type="text" id="comfy-ckpt" />
                 </div>
                 <div class="field">
-                    <label>Prompt Node ID:</label>
-                    <input type="text" id="comfy-prompt-node" />
+                    <label>Checkpoint Node ID:</label>
+                    <input type="text" id="comfy-ckpt-node" />
                 </div>
                 <div class="field">
-                    <label>Negative Prompt Node ID:</label>
-                    <input type="text" id="comfy-neg-node" />
+                    <label>Prompt Node ID:</label>
+                    <input type="text" id="comfy-prompt-node" />
                 </div>
                 <div class="field">
                     <label>Sampler Node ID:</label>
@@ -109,6 +109,10 @@
                 <div class="field">
                     <label>Save Node ID:</label>
                     <input type="text" id="comfy-save-node" />
+                </div>
+                <div class="field">
+                    <label>Workflow JSON (Optional):</label>
+                    <textarea id="comfy-workflow" rows="10" placeholder="Paste your ComfyUI API JSON here. If empty, the default workflow will be used."></textarea>
                 </div>
             </div>
             <div class="section">
@@ -201,14 +205,16 @@
                     config.comfy.base_url;
                 document.getElementById("comfy-ckpt").value =
                     config.comfy.ckpt_name;
+                document.getElementById("comfy-ckpt-node").value =
+                    config.comfy.checkpoint_node_id || "4";
                 document.getElementById("comfy-prompt-node").value =
                     config.comfy.prompt_node_id;
-                document.getElementById("comfy-neg-node").value =
-                    config.comfy.negative_prompt_node_id;
                 document.getElementById("comfy-sampler-node").value =
                     config.comfy.sampler_node_id;
                 document.getElementById("comfy-save-node").value =
                     config.comfy.save_node_id;
+                document.getElementById("comfy-workflow").value =
+                    config.comfy.workflow || "";
             }
 
             async function saveConfig() {
@@ -247,14 +253,17 @@
                     comfy: {
                         base_url: document.getElementById("comfy-url").value,
                         ckpt_name: document.getElementById("comfy-ckpt").value,
+                        checkpoint_node_id:
+                            document.getElementById("comfy-ckpt-node").value,
                         prompt_node_id:
                             document.getElementById("comfy-prompt-node").value,
-                        negative_prompt_node_id:
-                            document.getElementById("comfy-neg-node").value,
                         sampler_node_id:
                             document.getElementById("comfy-sampler-node").value,
                         save_node_id:
                             document.getElementById("comfy-save-node").value,
+                        workflow:
+                            document.getElementById("comfy-workflow").value ||
+                            null,
                     },
                 };
 
