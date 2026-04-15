@@ -40,8 +40,8 @@ WORKDIR /app
 COPY --from=builder /app/target/release/omnissiatac-bot /app/omnissiatac-bot
 
 # Copy the wrapper script
-COPY omnissiah /app/omnissiah
-RUN chmod +x /app/omnissiah
+COPY omnissiatac /app/omnissiatac
+RUN chmod +x /app/omnissiatac
 
 # Copy static assets required by the web server
 COPY static /app/static
@@ -56,4 +56,4 @@ COPY config.toml.example /app/config.toml
 EXPOSE 3000
 
 # Run the bot wrapper
-CMD ["./omnissiah"]
+CMD ["./omnissiatac"]

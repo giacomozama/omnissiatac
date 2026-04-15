@@ -22,7 +22,7 @@ services:
       - ./playlists:/app/playlists
       - ./password.hash:/app/password.hash
     restart: unless-stopped
-    command: ["./omnissiah"]
+    command: ["./omnissiatac"]
 
   lavalink:
     build: ./lavalink
