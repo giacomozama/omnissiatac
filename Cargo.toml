@@ -6,10 +6,10 @@ edition = "2024"
 [dependencies]
 serenity = { version = "0.12", default-features = false, features = ["client", "gateway", "rustls_backend", "model", "cache"] }
 lavalink-rs = { version = "0.15.0", features = ["serenity", "songbird", "macros"] }
-songbird = { version = "0.5", features = ["serenity"] }
+songbird = { version = "0.6.0", features = ["serenity"] }
 tokio = { version = "1", features = ["full"] }
 tracing = "0.1"
-tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+tracing-subscriber = { version = "0.3.23", features = ["env-filter"] }
 dotenvy = "0.15"
 serde_json = "1"
 dashmap = "6"
