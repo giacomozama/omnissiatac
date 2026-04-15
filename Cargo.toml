@@ -3,6 +3,10 @@ name = "omnissiatac"
 version = "0.1.0"
 edition = "2024"
 
+[[bin]]
+name = "omnissiatac-bot"
+path = "src/main.rs"
+
 [dependencies]
 serenity = { version = "0.12", default-features = false, features = ["client", "gateway", "rustls_backend", "model", "cache"] }
 lavalink-rs = { version = "0.15.0", features = ["serenity", "songbird", "macros"] }

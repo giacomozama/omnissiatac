@@ -37,11 +37,11 @@ RUN apt-get update && apt-get install -y \
 WORKDIR /app
 
 # Copy the binary from the builder stage
-COPY --from=builder /app/target/release/omnissiatac /app/omnissiatac
+COPY --from=builder /app/target/release/omnissiatac-bot /app/omnissiatac-bot
 
 # Copy the wrapper script
-COPY run.sh /app/run.sh
-RUN chmod +x /app/run.sh
+COPY omnissiah /app/omnissiah
+RUN chmod +x /app/omnissiah
 
 # Copy static assets required by the web server
 COPY static /app/static
@@ -56,4 +56,4 @@ COPY config.toml.example /app/config.toml
 EXPOSE 3000
 
 # Run the bot wrapper
-CMD ["./run.sh"]
+CMD ["./omnissiah"]

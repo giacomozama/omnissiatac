@@ -3,7 +3,7 @@ use std::fs;
 use std::path::{Path, PathBuf};
 
 fn main() {
-    println!("cargo:rerun-if-changed=run.sh");
+    println!("cargo:rerun-if-changed=omnissiah");
     println!("cargo:rerun-if-changed=config.toml.example");
     println!("cargo:rerun-if-changed=static");
 
@@ -17,7 +17,7 @@ fn main() {
         .unwrap()
         .to_path_buf();
 
-    let files_to_copy = vec!["run.sh", "config.toml.example"];
+    let files_to_copy = vec!["omnissiah", "config.toml.example"];
     for file in files_to_copy {
         let src = Path::new(file);
         let dest = profile_dir.join(file);
