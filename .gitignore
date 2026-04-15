@@ -1,0 +1,7 @@
+/target
+.env
+config.toml
+/lavalink
+/playlists/
+password.hash
+/flux/token

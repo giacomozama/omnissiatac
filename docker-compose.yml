@@ -1,0 +1,80 @@
+services:
+  bot:
+    build: .
+    ports:
+      - "3000:3000"
+    depends_on:
+      lavalink:
+        condition: service_healthy
+      ollama:
+        condition: service_started
+      comfyui:
+        condition: service_started
+    environment:
+      - DISCORD_TOKEN=${DISCORD_TOKEN}
+      - LAVALINK_HOST=lavalink
+      - LAVALINK_PORT=2333
+      - LAVALINK_PASSWORD=${LAVALINK_PASSWORD:-youshallnotpass}
+      - OLLAMA_BASE_URL=http://ollama:11434
+      - COMFY_BASE_URL=http://comfyui:8188
+    volumes:
+      - ./config.toml:/app/config.toml
+      - ./playlists:/app/playlists
+      - ./password.hash:/app/password.hash
+    restart: unless-stopped
+    command: /bin/sh -c "sleep 5 && ./omnissiatac"
+
+  lavalink:
+    build: ./lavalink
+    ports:
+      - "2333:2333"
+    environment:
+      - LAVALINK_SERVER_PASSWORD=${LAVALINK_PASSWORD:-youshallnotpass}
+    volumes:
+      - ./lavalink/application.yml:/opt/lavalink/application.yml
+      - ./lavalink/plugins:/opt/lavalink/plugins
+      - ./lavalink/logs:/opt/lavalink/logs
+    healthcheck:
+      test: ["CMD", "curl", "http://localhost:2333"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 60s
+    restart: unless-stopped
+
+  ollama:
+    image: ollama/ollama:latest
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama_data:/root/.ollama
+    restart: unless-stopped
+    # Uncomment deploy section for NVIDIA GPU support
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+
+  comfyui:
+    image: yanwk/comfyui-boot:latest
+    ports:
+      - "8188:8188"
+    volumes:
+      - ./comfyui/storage:/home/scripts
+      - ./comfyui/models:/home/models
+      - ./comfyui/output:/home/output
+    restart: unless-stopped
+    # Uncomment deploy section for NVIDIA GPU support
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+
+volumes:
+  ollama_data:

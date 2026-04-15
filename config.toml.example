@@ -1,0 +1,25 @@
+[discord]
+token = "YOUR_DISCORD_TOKEN"
+
+[lavalink]
+host = "localhost"
+port = 2333
+password = "youshallnotpass"
+is_ssl = false
+
+[bot]
+inactivity_timeout_seconds = 300
+
+[ollama]
+base_url = "http://localhost:11434"
+model = "llama3"
+api_key = ""
+system_prompt = "You are OmnissiATAC, a confrontational edgelord and 4chan-style troll. You are a vulgar asshole, rude, and dismissive of the user. You use internet slang and mock those who talk to you. Keep responses concise, toxic, and edgy."
+
+[comfy]
+base_url = "http://localhost:8188"
+ckpt_name = "v1-5-pruned-emaonly.ckpt"
+prompt_node_id = "6"
+negative_prompt_node_id = "7"
+sampler_node_id = "3"
+save_node_id = "9"

@@ -1,0 +1,312 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>OmnissiATAC Configuration</title>
+        <link rel="stylesheet" href="/static/style.css" />
+    </head>
+    <body>
+        <pre id="title-art">
+╔═════════════════════════════════════════════════╗
+║ ▗▄▖ ▄▄▄▄  ▄▄▄▄  ▄  ▄▄▄  ▄▄▄ ▄  ▗▄▖▗▄▄▄▖▗▄▖  ▗▄▄▖║
+║▐▌ ▐▌█ █ █ █   █ ▄ ▀▄▄  ▀▄▄  ▄ ▐▌ ▐▌ █ ▐▌ ▐▌▐▌   ║
+║▐▌ ▐▌█   █ █   █ █ ▄▄▄▀ ▄▄▄▀ █ ▐▛▀▜▌ █ ▐▛▀▜▌▐▌   ║
+║▝▚▄▞▘            █           █ ▐▌ ▐▌ █ ▐▌ ▐▌▝▚▄▄▖║
+╚═════════════════════════════════════════════════╝
+    </pre
+        >
+
+        <div id="login-form">
+            <div class="section">
+                <h3>Authentication Required</h3>
+                <div class="field">
+                    <label>Password:</label>
+                    <input
+                        type="password"
+                        id="login-password"
+                        onkeypress="if (event.key === 'Enter') login();"
+                    />
+                </div>
+            </div>
+
+            <button onclick="login()">Login</button>
+            <div id="login-error" style="color: red; margin-top: 10px"></div>
+        </div>
+
+        <div id="config-form">
+            <div class="section">
+                <h3>Discord</h3>
+                <div class="field">
+                    <label>Token:</label>
+                    <input type="password" id="discord-token" />
+                </div>
+            </div>
+            <div class="section">
+                <h3>Lavalink</h3>
+                <div class="field">
+                    <label>Host:</label> <input type="text" id="lava-host" />
+                </div>
+                <div class="field">
+                    <label>Port:</label> <input type="number" id="lava-port" />
+                </div>
+                <div class="field">
+                    <label>Password:</label>
+                    <input type="password" id="lava-pass" />
+                </div>
+                <div class="field">
+                    <label>SSL:</label> <input type="checkbox" id="lava-ssl" />
+                </div>
+            </div>
+            <div class="section">
+                <h3>Bot</h3>
+                <div class="field">
+                    <label>Inactivity Timeout (s):</label>
+                    <input type="number" id="bot-timeout" />
+                </div>
+            </div>
+            <div class="section">
+                <h3>Ollama</h3>
+                <div class="field">
+                    <label>Base URL:</label>
+                    <input type="text" id="ollama-url" />
+                </div>
+                <div class="field">
+                    <label>Model:</label>
+                    <input type="text" id="ollama-model" />
+                </div>
+                <div class="field">
+                    <label>API Key (Optional):</label>
+                    <input type="password" id="ollama-key" placeholder="None" />
+                </div>
+                <div class="field">
+                    <label>System Prompt:</label>
+                    <textarea id="ollama-system" rows="10"></textarea>
+                </div>
+            </div>
+            <div class="section">
+                <h3>ComfyUI</h3>
+                <div class="field">
+                    <label>Base URL:</label>
+                    <input type="text" id="comfy-url" />
+                </div>
+                <div class="field">
+                    <label>Checkpoint Name:</label>
+                    <input type="text" id="comfy-ckpt" />
+                </div>
+                <div class="field">
+                    <label>Prompt Node ID:</label>
+                    <input type="text" id="comfy-prompt-node" />
+                </div>
+                <div class="field">
+                    <label>Negative Prompt Node ID:</label>
+                    <input type="text" id="comfy-neg-node" />
+                </div>
+                <div class="field">
+                    <label>Sampler Node ID:</label>
+                    <input type="text" id="comfy-sampler-node" />
+                </div>
+                <div class="field">
+                    <label>Save Node ID:</label>
+                    <input type="text" id="comfy-save-node" />
+                </div>
+            </div>
+            <div class="section">
+                <h3>Web (Auth Settings)</h3>
+                <div class="field">
+                    <label>New Password:</label>
+                    <input
+                        type="password"
+                        id="new-password"
+                        placeholder="Leave empty to keep current"
+                    />
+                </div>
+            </div>
+            <button id="save-button" onclick="saveConfig()">
+                Save Configuration
+            </button>
+            <button id="logout-button" onclick="logout()">Logout</button>
+        </div>
+        <div id="status"></div>
+
+        <script>
+            let currentConfig = null;
+
+            async function logout() {
+                await fetch("/api/logout", { method: "POST" });
+                window.location.reload();
+            }
+
+            async function login() {
+                const password =
+                    document.getElementById("login-password").value;
+                const errorDiv = document.getElementById("login-error");
+                errorDiv.innerText = "";
+
+                try {
+                    const res = await fetch("/api/login", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({ password }),
+                    });
+
+                    if (res.ok) {
+                        document.getElementById("login-form").style.display =
+                            "none";
+                        loadConfig();
+                    } else {
+                        errorDiv.innerText = "Invalid password";
+                    }
+                } catch (e) {
+                    errorDiv.innerText = "Error: " + e.message;
+                }
+            }
+
+            async function loadConfig() {
+                const res = await fetch("/api/config");
+                if (res.status === 401) {
+                    document.getElementById("login-form").style.display =
+                        "flex";
+                    document.getElementById("config-form").style.display =
+                        "none";
+                    return;
+                }
+
+                const config = await res.json();
+                currentConfig = config;
+
+                document.getElementById("config-form").style.display = "flex";
+                document.getElementById("discord-token").value =
+                    config.discord.token;
+                document.getElementById("lava-host").value =
+                    config.lavalink.host;
+                document.getElementById("lava-port").value =
+                    config.lavalink.port;
+                document.getElementById("lava-pass").value =
+                    config.lavalink.password;
+                document.getElementById("lava-ssl").checked =
+                    config.lavalink.is_ssl;
+                document.getElementById("bot-timeout").value =
+                    config.bot.inactivity_timeout_seconds;
+                document.getElementById("ollama-url").value =
+                    config.ollama.base_url;
+                document.getElementById("ollama-model").value =
+                    config.ollama.model;
+                document.getElementById("ollama-key").value =
+                    config.ollama.api_key || "";
+                document.getElementById("ollama-system").value =
+                    config.ollama.system_prompt || "";
+
+                document.getElementById("comfy-url").value =
+                    config.comfy.base_url;
+                document.getElementById("comfy-ckpt").value =
+                    config.comfy.ckpt_name;
+                document.getElementById("comfy-prompt-node").value =
+                    config.comfy.prompt_node_id;
+                document.getElementById("comfy-neg-node").value =
+                    config.comfy.negative_prompt_node_id;
+                document.getElementById("comfy-sampler-node").value =
+                    config.comfy.sampler_node_id;
+                document.getElementById("comfy-save-node").value =
+                    config.comfy.save_node_id;
+            }
+
+            async function saveConfig() {
+                const status = document.getElementById("status");
+                const newPassword =
+                    document.getElementById("new-password").value;
+                status.innerText = "Saving...";
+
+                const config = {
+                    discord: {
+                        token: document.getElementById("discord-token").value,
+                    },
+                    lavalink: {
+                        host: document.getElementById("lava-host").value,
+                        port: parseInt(
+                            document.getElementById("lava-port").value,
+                        ),
+                        password: document.getElementById("lava-pass").value,
+                        is_ssl: document.getElementById("lava-ssl").checked,
+                    },
+                    bot: {
+                        inactivity_timeout_seconds: parseInt(
+                            document.getElementById("bot-timeout").value,
+                        ),
+                    },
+                    web: {},
+                    ollama: {
+                        base_url: document.getElementById("ollama-url").value,
+                        model: document.getElementById("ollama-model").value,
+                        api_key:
+                            document.getElementById("ollama-key").value || null,
+                        system_prompt:
+                            document.getElementById("ollama-system").value ||
+                            null,
+                    },
+                    comfy: {
+                        base_url: document.getElementById("comfy-url").value,
+                        ckpt_name: document.getElementById("comfy-ckpt").value,
+                        prompt_node_id:
+                            document.getElementById("comfy-prompt-node").value,
+                        negative_prompt_node_id:
+                            document.getElementById("comfy-neg-node").value,
+                        sampler_node_id:
+                            document.getElementById("comfy-sampler-node").value,
+                        save_node_id:
+                            document.getElementById("comfy-save-node").value,
+                    },
+                };
+
+                try {
+                    // Save general configuration
+                    const res = await fetch("/api/config", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify(config),
+                    });
+
+                    if (res.ok) {
+                        currentConfig = config;
+
+                        // If a new password was provided, update it as well
+                        if (newPassword) {
+                            const pwRes = await fetch("/api/change-password", {
+                                method: "POST",
+                                headers: { "Content-Type": "application/json" },
+                                body: JSON.stringify({
+                                    new_password: newPassword,
+                                }),
+                            });
+
+                            if (pwRes.ok) {
+                                status.innerText =
+                                    "Configuration and password saved successfully!";
+                                document.getElementById("new-password").value =
+                                    "";
+                            } else {
+                                status.innerText =
+                                    "Config saved, but password update failed.";
+                            }
+                        } else {
+                            status.innerText =
+                                "Configuration saved successfully!";
+                        }
+                    } else if (res.status === 401) {
+                        status.innerText = "Session expired. Please reload.";
+                        document.getElementById("config-form").style.display =
+                            "none";
+                        document.getElementById("login-form").style.display =
+                            "flex";
+                    } else {
+                        status.innerText = "Error saving configuration.";
+                    }
+                } catch (e) {
+                    status.innerText = "Error: " + e.message;
+                }
+            }
+
+            loadConfig();
+        </script>
+    </body>
+</html>
