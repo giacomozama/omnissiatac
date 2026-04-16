@@ -2,13 +2,15 @@
 
 # Configuration
 REBOOT_EXIT_CODE=42
-BINARY="./omnissiatac-bot"
+# Set the directory of the script
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+BINARY="$SCRIPT_DIR/omnissiatac-bot"
 
 echo "Starting OmnissiATAC wrapper script..."
 
 while true; do
-    echo "Launching bot..."
-    $BINARY "$@"
+    echo "Launching bot from $BINARY..."
+    "$BINARY" "$@"
     EXIT_STATUS=$?
 
     if [ $EXIT_STATUS -eq $REBOOT_EXIT_CODE ]; then
