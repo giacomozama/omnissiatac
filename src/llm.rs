@@ -1,6 +1,7 @@
 use crate::config::OllamaConfig;
 use anyhow::Result;
 use serde::{Deserialize, Serialize};
+use tracing::info;
 
 #[derive(Serialize)]
 struct ChatRequest {
@@ -57,8 +58,10 @@ pub async fn query_llm(
         }
     }
 
-    let response = rb.send().await?.json::<ChatResponse>().await?;
+    let response_raw = rb.send().await?;
+    info!("ollama response: {:?}", response_raw);
 
+    let response = response_raw.json::<ChatResponse>().await?;
     let assistant_message = response.message;
     messages.push(assistant_message.clone());
 

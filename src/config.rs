@@ -12,6 +12,7 @@ pub struct Config {
     pub discord: DiscordConfig,
     pub lavalink: LavalinkConfig,
     pub bot: BotConfig,
+    pub web: WebConfig,
     pub ollama: OllamaConfig,
     pub comfy: ComfyUIConfig,
 }
@@ -33,6 +34,11 @@ pub struct LavalinkConfig {
 pub struct BotConfig {
     pub inactivity_timeout_seconds: u64,
     pub reboot_owner_only: Option<bool>,
+}
+
+#[derive(Debug, Deserialize, Serialize, Clone)]
+pub struct WebConfig {
+    pub port: u16
 }
 
 #[derive(Debug, Deserialize, Serialize, Clone)]

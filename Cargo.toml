@@ -8,7 +8,7 @@ name = "omnissiatac-bot"
 path = "src/main.rs"
 
 [dependencies]
-serenity = { version = "0.12", default-features = false, features = ["client", "gateway", "rustls_backend", "model", "cache"] }
+serenity = { version = "0.12.5", default-features = false, features = ["client", "gateway", "rustls_backend", "model", "cache"] }
 lavalink-rs = { version = "0.15.0", features = ["serenity", "songbird", "macros"] }
 songbird = { version = "0.5.0", features = ["serenity"] }
 tokio = { version = "1", features = ["full"] }

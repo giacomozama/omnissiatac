@@ -54,6 +54,9 @@ impl FromRequestParts<AppState> for AuthExtractor {
 }
 
 pub async fn start_web_server(state: AppState) {
+    let port = state.config.read().await.web.port;
+    info!("Starting web server on port {}", port);
+
     let app = Router::new()
         .route("/", get(index))
         .route("/api/login", post(login))
@@ -64,9 +67,14 @@ pub async fn start_web_server(state: AppState) {
         .nest_service("/static", ServeDir::new("static"))
         .with_state(state);
 
-    let listener = tokio::net::TcpListener::bind("0.0.0.0:3000").await.unwrap();
-    info!("Web server listening on http://0.0.0.0:3000");
-    axum::serve(listener, app).await.unwrap();
+    let addr = format!("0.0.0.0:{}", port);
+    let listener = tokio::net::TcpListener::bind(addr)
+        .await
+        .expect("Failed to bind to address");
+
+    info!("Web server listening on http://0.0.0.0:{}", port);
+
+    axum::serve(listener, app).await.expect("Couldn't start webserver");
 }
 
 async fn index() -> Html<&'static str> {

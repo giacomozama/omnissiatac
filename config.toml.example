@@ -11,6 +11,9 @@ is_ssl = false
 inactivity_timeout_seconds = 300
 reboot_owner_only = false
 
+[web]
+port = 3000
+
 [ollama]
 base_url = "http://localhost:11434"
 model = "llama3"
